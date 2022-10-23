@@ -132,6 +132,44 @@ class DRLAgent:
 
     @staticmethod
     def DRL_prediction_load_from_file(model_name, environment, cwd, deterministic=True):
+        # if model_name not in MODELS:
+        #     raise NotImplementedError("NotImplementedError")
+        # try:
+        #     # load agent
+        #     model = MODELS[model_name].load(cwd)
+        #     print("Successfully load model", cwd)
+        # except BaseException:
+        #     raise ValueError("Fail to load agent!")
+
+        # # test on the testing env
+        # state = environment.reset()
+        # episode_returns = []  # the cumulative_return / initial_account
+        # episode_total_assets = [environment.initial_total_asset]
+        # done = False
+        # while not done:
+        #     action = model.predict(state, deterministic=deterministic)[0]
+        #     state, reward, done, _ = environment.step(action)
+        #     total_asset = environment.amount
+
+        #     for i in range(len(environment.stocks)):
+        #         if environment.stocks[i]>=0:
+        #             total_asset += environment.price_ary[environment.day][i] * environment.stocks[i]
+        #         else:
+        #             short_assets += environment.price_ary[environment.day][i] * abs(environment.stocks[i])
+        #     initial_capital_in_shorts = environment.initial_total_asset - total_asset
+        #     total_asset += 2*initial_capital_in_shorts-short_assets
+
+        #     # total_asset = (
+        #     #     environment.amount
+        #     #     + (environment.price_ary[environment.day] * environment.stocks).sum()
+        #     # )
+        #     episode_total_assets.append(total_asset)
+        #     episode_return = total_asset / environment.initial_total_asset
+        #     episode_returns.append(episode_return)
+
+        # print("episode_return", episode_return)
+        # print("Test Finished!")
+        # return episode_total_assets
         if model_name not in MODELS:
             raise NotImplementedError("NotImplementedError")
         try:
@@ -340,11 +378,11 @@ class DRLEnsembleAgent:
         last_state_ensemble = []
 
         ppo_sharpe_list = []
-        ddpg_sharpe_list = []
+        # ddpg_sharpe_list = []
         #a2c_sharpe_list = []
 
         ppo_sharpe_list_r = []
-        ddpg_sharpe_list_r = []
+        # ddpg_sharpe_list_r = []
         #a2c_sharpe_list_r = []
 
         model_use = []
@@ -725,156 +763,165 @@ class DRLEnsembleAgent:
 
 ###################################################################################
 
-            print("======DDPG Training========")
-            model_ddpg = self.get_model(
-                "ddpg",
-                self.train_env,
-                policy="MlpPolicy",
-                model_kwargs=DDPG_model_kwargs,
-            )
-            model_ddpg = self.train_model(
-                model_ddpg,
-                "ddpg",
-                tb_log_name=f"ddpg_{i}",
-                iter_num=i,
-                total_timesteps=timesteps_dict["ddpg"],
-            )  # 50_000
-            print(
-                "======DDPG Validation from: ",
-                validation_start_date,
-                "to ",
-                validation_end_date,
-            )
-            val_env_ddpg = DummyVecEnv(
-                [
-                    lambda: StockTradingEnv(
-                        df=validation,
-                        stock_dim=self.stock_dim,
-                        hmax=self.hmax,
-                        initial_amount=self.initial_amount,
-                        num_stock_shares=[0] * self.stock_dim,
-                        buy_cost_pct=[self.buy_cost_pct] * self.stock_dim,
-                        sell_cost_pct=[self.sell_cost_pct] * self.stock_dim,
-                        reward_scaling=self.reward_scaling,
-                        state_space=self.state_space,
-                        action_space=self.action_space,
-                        n_action_space = 1,
-                        tech_indicator_list=self.tech_indicator_list,
-                        turbulence_threshold=turbulence_threshold,
-                        iteration=i,
-                        model_name="DDPG",
-                        mode="validation",
+            # print("======DDPG Training========")
+            # model_ddpg = self.get_model(
+            #     "ddpg",
+            #     self.train_env,
+            #     policy="MlpPolicy",
+            #     model_kwargs=DDPG_model_kwargs,
+            # )
+            # model_ddpg = self.train_model(
+            #     model_ddpg,
+            #     "ddpg",
+            #     tb_log_name=f"ddpg_{i}",
+            #     iter_num=i,
+            #     total_timesteps=timesteps_dict["ddpg"],
+            # )  # 50_000
+            # print(
+            #     "======DDPG Validation from: ",
+            #     validation_start_date,
+            #     "to ",
+            #     validation_end_date,
+            # )
+            # val_env_ddpg = DummyVecEnv(
+            #     [
+            #         lambda: StockTradingEnv(
+            #             df=validation,
+            #             stock_dim=self.stock_dim,
+            #             hmax=self.hmax,
+            #             initial_amount=self.initial_amount,
+            #             num_stock_shares=[0] * self.stock_dim,
+            #             buy_cost_pct=[self.buy_cost_pct] * self.stock_dim,
+            #             sell_cost_pct=[self.sell_cost_pct] * self.stock_dim,
+            #             reward_scaling=self.reward_scaling,
+            #             state_space=self.state_space,
+            #             action_space=self.action_space,
+            #             n_action_space = 1,
+            #             tech_indicator_list=self.tech_indicator_list,
+            #             turbulence_threshold=turbulence_threshold,
+            #             iteration=i,
+            #             model_name="DDPG",
+            #             mode="validation",
                         
-                        print_verbosity=self.print_verbosity,
-                    )
-                ]
-            )
-            val_obs_ddpg = val_env_ddpg.reset()
-            self.DRL_validation(
-                model=model_ddpg,
-                test_data=validation,
-                test_env=val_env_ddpg,
-                test_obs=val_obs_ddpg,
-            )
-            sharpe_ddpg = self.get_validation_sharpe(i, model_name="DDPG")
-            print("DDPG Sharpe Ratio: ", sharpe_ppo)
+            #             print_verbosity=self.print_verbosity,
+            #         )
+            #     ]
+            # )
+            # val_obs_ddpg = val_env_ddpg.reset()
+            # self.DRL_validation(
+            #     model=model_ddpg,
+            #     test_data=validation,
+            #     test_env=val_env_ddpg,
+            #     test_obs=val_obs_ddpg,
+            # )
+            # sharpe_ddpg = self.get_validation_sharpe(i, model_name="DDPG")
+            # print("DDPG Sharpe Ratio: ", sharpe_ppo)
 
-            ###############REVERSE##########################################
+            # ###############REVERSE##########################################
 
-            print("======DDPG REVERSE Training========")
-            model_ddpg_r = self.get_model(
-                "ddpg",
-                self.train_env_reverse,
-                policy="MlpPolicy",
-                model_kwargs=DDPG_model_kwargs,
-            )
-            model_ddpg_r = self.train_model(
-                model_ddpg_r,
-                "ddpg",
-                tb_log_name=f"ddpg_{i}",
-                iter_num=i,
-                total_timesteps=timesteps_dict["ddpg"],
-            )  # 50_000
-            print(
-                "======DDPG REVERSE Validation from: ",
-                validation_start_date,
-                "to ",
-                validation_end_date,
-            )
-            val_env_ddpg_reverse = DummyVecEnv(
-                [
-                    lambda: StockTradingEnv(
-                        df=validation,
-                        stock_dim=self.stock_dim,
-                        hmax=self.hmax,
-                        initial_amount=self.initial_amount,
-                        num_stock_shares=[0] * self.stock_dim,
-                        buy_cost_pct=[self.buy_cost_pct] * self.stock_dim,
-                        sell_cost_pct=[self.sell_cost_pct] * self.stock_dim,
-                        reward_scaling=self.reward_scaling,
-                        state_space=self.state_space,
-                        action_space=self.action_space,
-                        n_action_space = 2,
-                        tech_indicator_list=self.tech_indicator_list,
-                        turbulence_threshold=turbulence_threshold,
-                        iteration=i,
-                        model_name="DDPG_R",
-                        mode="validation",
+            # print("======DDPG REVERSE Training========")
+            # model_ddpg_r = self.get_model(
+            #     "ddpg",
+            #     self.train_env_reverse,
+            #     policy="MlpPolicy",
+            #     model_kwargs=DDPG_model_kwargs,
+            # )
+            # model_ddpg_r = self.train_model(
+            #     model_ddpg_r,
+            #     "ddpg",
+            #     tb_log_name=f"ddpg_{i}",
+            #     iter_num=i,
+            #     total_timesteps=timesteps_dict["ddpg"],
+            # )  # 50_000
+            # print(
+            #     "======DDPG REVERSE Validation from: ",
+            #     validation_start_date,
+            #     "to ",
+            #     validation_end_date,
+            # )
+            # val_env_ddpg_reverse = DummyVecEnv(
+            #     [
+            #         lambda: StockTradingEnv(
+            #             df=validation,
+            #             stock_dim=self.stock_dim,
+            #             hmax=self.hmax,
+            #             initial_amount=self.initial_amount,
+            #             num_stock_shares=[0] * self.stock_dim,
+            #             buy_cost_pct=[self.buy_cost_pct] * self.stock_dim,
+            #             sell_cost_pct=[self.sell_cost_pct] * self.stock_dim,
+            #             reward_scaling=self.reward_scaling,
+            #             state_space=self.state_space,
+            #             action_space=self.action_space,
+            #             n_action_space = 2,
+            #             tech_indicator_list=self.tech_indicator_list,
+            #             turbulence_threshold=turbulence_threshold,
+            #             iteration=i,
+            #             model_name="DDPG_R",
+            #             mode="validation",
                         
-                        print_verbosity=self.print_verbosity,
-                    )
-                ]
-            )
-            val_obs_ddpg_r = val_env_ddpg_reverse.reset()
-            self.DRL_validation(
-                model=model_ddpg_r,
-                test_data=validation,
-                test_env=val_env_ddpg_reverse,
-                test_obs=val_obs_ddpg_r,
-            )
-            sharpe_ddpg_r = self.get_validation_sharpe(i, model_name="DDPG_R")
-            print("DDPG Reverse Sharpe Ratio: ", sharpe_ddpg_r)
+            #             print_verbosity=self.print_verbosity,
+            #         )
+            #     ]
+            # )
+            # val_obs_ddpg_r = val_env_ddpg_reverse.reset()
+            # self.DRL_validation(
+            #     model=model_ddpg_r,
+            #     test_data=validation,
+            #     test_env=val_env_ddpg_reverse,
+            #     test_obs=val_obs_ddpg_r,
+            # )
+            # sharpe_ddpg_r = self.get_validation_sharpe(i, model_name="DDPG_R")
+            # print("DDPG Reverse Sharpe Ratio: ", sharpe_ddpg_r)
 
 ########################################################################################
 
             ppo_sharpe_list.append(sharpe_ppo)
             #a2c_sharpe_list.append(sharpe_a2c)
-            ddpg_sharpe_list.append(sharpe_ddpg)
+            # ddpg_sharpe_list.append(sharpe_ddpg)
 
 
             ppo_sharpe_list_r.append(sharpe_ppo_r)
             #a2c_sharpe_list_r.append(sharpe_a2c_r)
-            ddpg_sharpe_list_r.append(sharpe_ddpg_r)
+            # ddpg_sharpe_list_r.append(sharpe_ddpg_r)
 
-            sharpe_list = [sharpe_ppo,sharpe_ddpg,sharpe_ppo_r,sharpe_ddpg_r]
+            sharpe_list = [sharpe_ppo,sharpe_ppo_r]
             max_sharpe = max(sharpe_list)
             max_index = sharpe_list.index(max_sharpe)
 
-            # Order: PPO,A2C,DDGP,PPO_REVERSE,A2C_REVERSE,DDGP_REVERSE
-            if max_index==0:
+            if sharpe_ppo>=sharpe_ppo_r:
                 model_ensemble = model_ppo
                 n_action_space = 1
                 model_use.append('PPO')
-            # elif max_index==1:
-            #     model_ensemble = model_a2c
-            #     n_action_space = 1
-            #     model_use.append('A2C')
-            elif max_index==1:
-                model_ensemble = model_ddpg
-                n_action_space = 1
-                model_use.append('DDPG')
-            elif max_index==2:
+            else:
                 model_ensemble = model_ppo_r
                 n_action_space = 2
-                model_use.append('PPO with reverse action space')
-            # elif max_index==4:
-            #     model_ensemble = model_a2c_r
+                model_use.append('PPO with reverse action space')  
+
+            # Order: PPO,A2C,DDGP,PPO_REVERSE,A2C_REVERSE,DDGP_REVERSE
+            # if max_index==0:
+            #     model_ensemble = model_ppo
+            #     n_action_space = 1
+            #     model_use.append('PPO')
+            # # elif max_index==1:
+            # #     model_ensemble = model_a2c
+            # #     n_action_space = 1
+            # #     model_use.append('A2C')
+            # elif max_index==1:
+            #     model_ensemble = model_ddpg
+            #     n_action_space = 1
+            #     model_use.append('DDPG')
+            # elif max_index==2:
+            #     model_ensemble = model_ppo_r
             #     n_action_space = 2
-            #     model_use.append('A2C with reverse action space')
-            elif max_index==3:
-                model_ensemble = model_ddpg_r
-                n_action_space = 2
-                model_use.append('DDPG with reverse action space')
+            #     model_use.append('PPO with reverse action space')
+            # # elif max_index==4:
+            # #     model_ensemble = model_a2c_r
+            # #     n_action_space = 2
+            # #     model_use.append('A2C with reverse action space')
+            # elif max_index==3:
+            #     model_ensemble = model_ddpg_r
+            #     n_action_space = 2
+            #     model_use.append('DDPG with reverse action space')
 
             print(
                 "======Best Model Retraining from: ",
@@ -915,10 +962,10 @@ class DRLEnsembleAgent:
                 model_use,
                 #a2c_sharpe_list,
                 ppo_sharpe_list,
-                ddpg_sharpe_list,
+                # ddpg_sharpe_list,
                 #a2c_sharpe_list_r,
                 ppo_sharpe_list_r,
-                ddpg_sharpe_list_r,
+                # ddpg_sharpe_list_r,
 
             ]
         ).T
@@ -929,10 +976,10 @@ class DRLEnsembleAgent:
             "Model Used",
             # "A2C Sharpe",
             "PPO Sharpe",
-            "DDPG Sharpe",
+            # "DDPG Sharpe",
             # "A2C REVERSE Sharpe",
             "PPO REVERSE Sharpe",
-            "DDPG REVERSE Sharpe",
+            # "DDPG REVERSE Sharpe",
         ]
 
         return df_summary

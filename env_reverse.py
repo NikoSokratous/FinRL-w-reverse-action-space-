@@ -10,6 +10,8 @@ import pandas as pd
 from gym import spaces
 from gym.utils import seeding
 from stable_baselines3.common.vec_env import DummyVecEnv
+#petiximeni prospathias 1 me ton akolutho thrreshold
+TURBULENCE_THRESHOLD = 175
 
 matplotlib.use("Agg")
 
@@ -107,9 +109,9 @@ class StockTradingEnv(gym.Env):
 
     def _sell_stock(self, index, action):
         def _do_sell_normal():
-            if (
-                  self.state[index + 2 * self.stock_dim + 1] != True
-            ):  # check if the stock is able to sell, for simlicity we just add it in techical index
+            # if (
+            #       self.state[index + 2 * self.stock_dim + 1] != True
+            # ):  # check if the stock is able to sell, for simlicity we just add it in techical index
             #     # if self.state[index + 1] > 0: # if we use price<0 to denote a stock is unable to trade in that day, the total asset calculation may be wrong for the price is unreasonable
             #     # Sell only if the price is > 0 (no missing data in this particular date)
             #     # perform sell action based on the sign of the action
@@ -135,10 +137,10 @@ class StockTradingEnv(gym.Env):
                     self.trades += 1
                 else:
                     sell_num_shares = 0
-            else:
-                 sell_num_shares = 0
+            # else:
+            #      sell_num_shares = 0
 
-            return sell_num_shares
+                return sell_num_shares
 
         # perform sell action based on the sign of the action
         if self.turbulence_threshold is not None:
@@ -177,58 +179,58 @@ class StockTradingEnv(gym.Env):
     def _buy_stock(self, index, action):
         def _do_buy():
             if self.state[index + self.stock_dim + 1] >= 0:
-                if (
-                     self.state[index + 2 * self.stock_dim + 1] != True
-                ):  # check if the stock is able to buy
-                # if self.state[index + 1] >0:
+                # if (
+                #      self.state[index + 2 * self.stock_dim + 1] != True
+                # ):  # check if the stock is able to buy
+                # # if self.state[index + 1] >0:
                 # Buy only if the price is > 0 (no missing data in this particular date)
-                    available_amount = self.state[0] // (
-                        self.state[index + 1] * (1 + self.buy_cost_pct[index])
-                    )  # when buying stocks, we should consider the cost of trading when calculating available_amount, or we may be have cash<0
-                    # print('available_amount:{}'.format(available_amount))
+                available_amount = self.state[0] // (
+                    self.state[index + 1] * (1 + self.buy_cost_pct[index])
+                )  # when buying stocks, we should consider the cost of trading when calculating available_amount, or we may be have cash<0
+                # print('available_amount:{}'.format(available_amount))
 
-                    # update balance
-                    buy_num_shares = min(available_amount, abs(action))
-                    buy_amount = (
-                        self.state[index + 1]
-                        * buy_num_shares
-                        * (1 + self.buy_cost_pct[index])
-                    )
-                    self.state[0] -= buy_amount
+                # update balance
+                buy_num_shares = min(available_amount, abs(action))
+                buy_amount = (
+                    self.state[index + 1]
+                    * buy_num_shares
+                    * (1 + self.buy_cost_pct[index])
+                )
+                self.state[0] -= buy_amount
 
-                    self.state[index + self.stock_dim + 1] += buy_num_shares
+                self.state[index + self.stock_dim + 1] += buy_num_shares
 
-                    self.cost += (
-                        self.state[index + 1] * buy_num_shares * self.buy_cost_pct[index]
-                    )
-                    self.trades += 1
+                self.cost += (
+                    self.state[index + 1] * buy_num_shares * self.buy_cost_pct[index]
+                )
+                self.trades += 1
 
-                    return buy_num_shares
-                else:
-                    buy_num_shares=0
-                    return buy_num_shares
+                return buy_num_shares
+                # else:
+                #     buy_num_shares=0
+                #     return buy_num_shares
             else:
                 # if (
                 #      self.state[index + 2 * self.stock_dim + 1] != True
                 # ):
                     
-                    taking_home = self.historyy3[index]*2 - self.state[index+1]
+                taking_home = self.historyy3[index]*2 - self.state[index+1]
 
 
-                    sell_num_shorts = abs(self.state[index + self.stock_dim + 1])
-                    short_amount_sold = (taking_home* sell_num_shorts* (1 - self.buy_cost_pct[index]))
-                    # update balance
-                    self.state[0] += abs(short_amount_sold)
+                sell_num_shorts = abs(self.state[index + self.stock_dim + 1])
+                short_amount_sold = (taking_home* sell_num_shorts* (1 - self.buy_cost_pct[index]))
+                # update balance
+                self.state[0] += abs(short_amount_sold)
 
-                    self.state[index + self.stock_dim + 1] = 0
-                    self.cost += abs((
-                        self.state[index + 1]
-                        * sell_num_shorts
-                        * self.sell_cost_pct[index]
-                    ))
-                    self.trades += 1
+                self.state[index + self.stock_dim + 1] += sell_num_shorts
+                self.cost += abs((
+                    self.state[index + 1]
+                    * sell_num_shorts
+                    * self.sell_cost_pct[index]
+                ))
+                self.trades += 1
 
-                    return sell_num_shorts
+                return sell_num_shorts
                 # else:
                 #     pass
 
@@ -412,7 +414,7 @@ class StockTradingEnv(gym.Env):
             )
             if df_total_value["daily_return"].std() != 0:
                 sharpe = (
-                    (252**0.5)
+                    (4**0.5)
                     * df_total_value["daily_return"].mean()
                     / df_total_value["daily_return"].std()
                 )
@@ -470,7 +472,10 @@ class StockTradingEnv(gym.Env):
             return self.state, self.reward, self.terminal, {}
 
         else:
-            actions = actions * self.hmax  # actions initially is scaled between 0 to 1
+            if self.turbulence<=1:
+                actions = actions * self.hmax  # actions initially is scaled between 0 to 1
+            else:
+                actions = actions * round((self.turbulence) * self.hmax )# actions initially is scaled between 0 to 1
             actions = actions.astype(
                 int
             )  # convert into integer because we can't by fraction of shares
@@ -548,21 +553,22 @@ class StockTradingEnv(gym.Env):
             self.historyy2 = np.array(self.state[1 : (self.stock_dim + 1)])
             stocks_price = np.array(self.state[1 : (self.stock_dim + 1)]) 
             end_total_asset = self.state[0]
+            short_value=0
 
             for i in range(len(stocks_owned)):
                 if stocks_owned[i]>=0:
                     end_total_asset += stocks_owned[i]*stocks_price[i]
                 else:
-                    short_value =(abs(stocks_owned[i]) * abs(self.historyy3[i]))*2 - (abs(stocks_price[i]) * abs(stocks_owned[i]))   
+                    short_value =((abs(stocks_owned[i])) * self.historyy3[i])*2 - (stocks_price[i] * abs(stocks_owned[i]))   
                     end_total_asset += short_value
             
             self.asset_memory.append(end_total_asset)
             self.date_memory.append(self._get_date())
-            self.reward = end_total_asset - begin_total_asset
+            self.reward = (end_total_asset - begin_total_asset - short_value*(0.0378/2))
             # end_total_asset = 0
             # begin_total_asset = 0
             self.rewards_memory.append(self.reward)
-            self.reward = self.reward * self.reward_scaling
+            self.reward = self.reward *0.005 #* self.reward_scaling
             self.state_memory.append(
                 self.state
             )  # add current state in state_recorder for each step
