@@ -11,15 +11,3 @@ The scenarios are uptrend, downtrend, no-trend, and multi-trend scenarios.
 To run a notebook just open the notebook in Google Colab, upload the env_reverse.py file from this repository, and the model_with_reverse_env_ppo.py file or the model_with_reverse_env_ppo_a2c.py depending on the notebook used. 
 You can easily find which model each notebook use from its name.
 
-<h2>What if someone wants to run the notebooks locally? </h2>
-
-If you want to run the notebooks locally the requirements are:
-
-- Python==3.6.0 or Python==3.7.0
-- numpy==1.16.4
-- pandas==1.0.3
-- stockstats
-- scikit-learn==0.21.0
-- gym==0.15.3
-- stable-baselines[mpi]
-- tensorflow==1.15.4
